@@ -1,4 +1,4 @@
-CODEC_URL := https://github.com/mozilla/mozjpeg/archive/v4.1.1.tar.gz
+CODEC_URL := https://github.com/mozilla/mozjpeg/archive/v3.3.1.tar.gz
 CODEC_DIR := node_modules/mozjpeg
 CODEC_OUT_RELATIVE := .libs/libjpeg.a rdswitch.o
 CODEC_OUT := $(addprefix $(CODEC_DIR)/, $(CODEC_OUT_RELATIVE))
