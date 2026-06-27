@@ -1,0 +1,160 @@
+name: Build Codecs
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'codecs/**'
+  pull_request:
+    paths:
+      - 'codecs/**'
+
+jobs:
+  cpp-codecs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        codec: [mozjpeg, avif, jxl, webp, wp2, imagequant, qoi, visdif]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.61
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y autoconf libtool pkg-config
+
+      - name: Build ${{ matrix.codec }}
+        working-directory: codecs/${{ matrix.codec }}
+        run: emmake make -j$(nproc)
+
+      - name: Upload ${{ matrix.codec }} artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.codec }}
+          path: |
+            codecs/${{ matrix.codec }}/**/*.js
+            codecs/${{ matrix.codec }}/**/*.wasm
+            codecs/${{ matrix.codec }}/**/*.worker.js
+          if-no-files-found: error
+
+  rust-codecs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        codec: [png, hqx, resize]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Install wasm-opt
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.61
+
+      - name: Build ${{ matrix.codec }}
+        working-directory: codecs/${{ matrix.codec }}
+        run: wasm-pack build -t web
+
+      - name: Upload ${{ matrix.codec }} artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.codec }}
+          path: codecs/${{ matrix.codec }}/pkg/
+          if-no-files-found: error
+
+  oxipng:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-unknown-unknown
+          components: rust-src
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Install wasm-opt
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.61
+
+      - name: Build oxipng (single-threaded)
+        working-directory: codecs/oxipng
+        run: wasm-pack build -t web
+
+      - name: Build oxipng (parallel)
+        working-directory: codecs/oxipng
+        env:
+          RUSTFLAGS: "-C target-feature=+atomics,+bulk-memory"
+        run: wasm-pack build -t web -d pkg-parallel . -- -Z build-std=panic_abort,std --features=parallel
+
+      - name: Upload oxipng artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: oxipng
+          path: |
+            codecs/oxipng/pkg/
+            codecs/oxipng/pkg-parallel/
+          if-no-files-found: error
+
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-opt
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.61
+
+      - name: Build rotate
+        working-directory: codecs/rotate
+        run: |
+          cargo build --target wasm32-unknown-unknown --release
+          wasm-opt -Os --strip target/wasm32-unknown-unknown/release/rotate.wasm -o rotate.wasm
+
+      - name: Upload rotate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rotate
+          path: codecs/rotate/rotate.wasm
+          if-no-files-found: error
+
+  merge-artifacts:
+    needs: [cpp-codecs, rust-codecs, oxipng, rotate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: List built artifacts
+        run: find artifacts/ -type f | head -100
+
+      - name: Upload combined codec build
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-codecs
+          path: artifacts/
+          if-no-files-found: error

@@ -1,4 +1,4 @@
-CODEC_URL = https://github.com/phoboslab/qoi/archive/8d35d93cdca85d2868246c2a8a80a1e2c16ba2a8.tar.gz
+CODEC_URL = https://github.com/phoboslab/qoi/archive/97bacc86a9c4abf5a2d452102dc26546c4c670b9.tar.gz
 
 CODEC_DIR = node_modules/qoi
 CODEC_BUILD_DIR:= $(CODEC_DIR)/build
