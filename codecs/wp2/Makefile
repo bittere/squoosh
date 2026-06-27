@@ -52,6 +52,7 @@ $(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CMAKE_FLAGS+=-DWP2_ENABLE_SIMD=1
 %/Makefile: $(CODEC_DIR)/CMakeLists.txt
 	emcmake cmake \
 		$(CMAKE_FLAGS) \
+		-DCMAKE_CXX_FLAGS="-Wno-error=unused-but-set-variable" \
 		-DWP2_BUILD_TESTS=0 \
 		-DWP2_BUILD_EXAMPLES=0 \
 		-DWP2_BUILD_EXTRAS=0 \
