@@ -139,6 +139,7 @@ jobs:
         working-directory: codecs/rotate
         run: |
           source $EMSDK/emsdk_env.sh
+          export PATH="$EMSDK/upstream/bin:$PATH"
           cargo build --target wasm32-unknown-unknown --release
           wasm-opt -Os --strip target/wasm32-unknown-unknown/release/rotate.wasm -o rotate.wasm
 
