@@ -3,10 +3,9 @@ CODEC_VERSION = 332feb17d17311c748445f7ee75c4fb55cc38530
 CODEC_DIR = node_modules/jxl
 CODEC_BUILD_ROOT := $(CODEC_DIR)/build
 CODEC_MT_BUILD_DIR := $(CODEC_BUILD_ROOT)/mt
-CODEC_MT_SIMD_BUILD_DIR := $(CODEC_BUILD_ROOT)/mt-simd
 ENVIRONMENT = worker
 
-OUT_JS = enc/jxl_enc.js enc/jxl_enc_mt.js enc/jxl_enc_mt_simd.js dec/jxl_dec.js enc/jxl_node_enc.js dec/jxl_node_dec.js
+OUT_JS = enc/jxl_enc.js enc/jxl_enc_mt.js dec/jxl_dec.js enc/jxl_node_enc.js dec/jxl_node_dec.js
 OUT_WASM = $(OUT_JS:.js=.wasm)
 OUT_WORKER = $(OUT_JS:.js=.worker.js)
 
@@ -14,26 +13,18 @@ OUT_WORKER = $(OUT_JS:.js=.worker.js)
 
 all: $(OUT_JS)
 
-# Define dependencies for all variations of build artifacts.
 $(filter enc/%,$(OUT_JS)): enc/jxl_enc.cpp
 $(filter dec/%,$(OUT_JS)): dec/jxl_dec.cpp
 
 enc/jxl_node_enc.js dec/jxl_node_dec.js: ENVIRONMENT = node
 
-# For single-threaded build, we compile with threads enabled, but then just don't use them nor link them in.
 enc/jxl_enc.js enc/jxl_node_enc.js enc/jxl_enc_mt.js dec/jxl_dec.js dec/jxl_node_dec.js: CODEC_BUILD_DIR:=$(CODEC_MT_BUILD_DIR)
-enc/jxl_enc_mt_simd.js: CODEC_BUILD_DIR:=$(CODEC_MT_SIMD_BUILD_DIR)
 
 enc/jxl_node_enc.js dec/jxl_node_dec.js enc/jxl_enc.js dec/jxl_dec.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
 enc/jxl_enc_mt.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
-enc/jxl_enc_mt_simd.js: $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/highway/libhwy.a
 
-# Disable errors on deprecated SIMD intrinsics.
-# JPEG-XL & Highway need to catch up, once they do, we can remove this suppression.
 export CXXFLAGS += -Wno-deprecated-declarations
-
-# Compile multithreaded wrappers with -pthread.
-enc/jxl_enc_mt.js enc/jxl_enc_mt_simd.js: CXXFLAGS+=-pthread
+enc/jxl_enc_mt.js: CXXFLAGS+=-pthread
 
 $(OUT_JS):
 	$(CXX) \
@@ -56,37 +47,32 @@ $(OUT_JS):
 		$(CODEC_BUILD_DIR)/third_party/libskcms.a \
 		$(CODEC_BUILD_DIR)/third_party/highway/libhwy.a
 
-%/lib/libjxl.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/lib/libjxl.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) jxl
 
-%/lib/libjxl_threads.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) jxl_threads
 
-%/third_party/brotli/libbrotlidec-static.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) brotlidec-static
 
-%/third_party/brotli/libbrotlienc-static.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) brotlienc-static
 
-%/third_party/brotli/libbrotlicommon-static.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) brotlicommon-static
 
-%/third_party/highway/libhwy.a: %/Makefile
+$(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) hwy
 
-# Enable SIMD on a SIMD build.
-$(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CXXFLAGS+=-msimd128
-
-# Build skcms once (shared by both mt and mt-simd builds)
 $(CODEC_DIR)/third_party/skcms/skcms.cc.o: $(CODEC_DIR)/CMakeLists.txt
 	emcc -Wall -O3 -o $@ -I$(CODEC_DIR)/third_party/skcms -c $(CODEC_DIR)/third_party/skcms/skcms.cc
 
-%/third_party/libskcms.a: $(CODEC_DIR)/third_party/skcms/skcms.cc.o
+$(CODEC_MT_BUILD_DIR)/third_party/libskcms.a: $(CODEC_DIR)/third_party/skcms/skcms.cc.o
 	mkdir -p $(@D)
 	emar rc $@ $<
 
-# Build mt-variant Makefiles (cmake)
-%/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third_party/skcms/skcms.cc.o
+$(CODEC_MT_BUILD_DIR)/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third_party/skcms/skcms.cc.o
 	emcmake cmake \
 	$(CMAKE_FLAGS) \
 	-DBUILD_SHARED_LIBS=0 \
@@ -113,6 +99,4 @@ $(CODEC_DIR)/CMakeLists.txt:
 
 clean:
 	$(RM) $(OUT_JS) $(OUT_WASM) $(OUT_WORKER)
-	$(MAKE) -C $(CODEC_BUILD_DIR) clean
 	$(MAKE) -C $(CODEC_MT_BUILD_DIR) clean
-	$(MAKE) -C $(CODEC_MT_SIMD_BUILD_DIR) clean

@@ -56,13 +56,13 @@ $(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CMAKE_FLAGS+=-DWP2_ENABLE_SIMD=1
 		-DWP2_BUILD_EXAMPLES=0 \
 		-DWP2_BUILD_EXTRAS=0 \
 		-DWP2_REDUCED=1 \
-		-DCMAKE_CXX_FLAGS="-Wno-error -Wno-array-parameter" \
 		-B $(@D) \
 		$(<D)
 
 $(CODEC_DIR)/CMakeLists.txt:
 	mkdir -p $(CODEC_DIR)
 	curl -sL $(CODEC_URL) | tar xz -C $(CODEC_DIR)
+	sed -i 's/int16_t context\[\]/int16_t context[kMaxContextSize]/' $(CODEC_DIR)/src/common/lossy/block.cc
 
 clean:
 	$(RM) $(OUT_JS) $(OUT_WASM) $(OUT_WORKER)
