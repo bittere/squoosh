@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        codec: [mozjpeg, avif, jxl, webp, wp2, imagequant, qoi, visdif]
+        codec: [mozjpeg, avif, webp, imagequant, qoi, visdif]
     steps:
       - uses: actions/checkout@v4
 
