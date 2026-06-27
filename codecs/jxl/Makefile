@@ -41,9 +41,9 @@ $(OUT_JS):
 		-s EXPORT_ES6=1 \
 		-o $@ \
 		$+ \
-		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a \
-		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a \
-		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a \
+		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlidec.a \
+		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlienc.a \
+		$(CODEC_BUILD_DIR)/third_party/brotli/libbrotlicommon.a \
 		$(CODEC_BUILD_DIR)/third_party/libskcms.a \
 		$(CODEC_BUILD_DIR)/third_party/highway/libhwy.a
 
@@ -78,7 +78,7 @@ $(CODEC_MT_BUILD_DIR)/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third
 	-DCMAKE_CROSSCOMPILING_EMULATOR=node \
 	-B $(@D) \
 	$(<D)
-	$(MAKE) -C $(<D) brotlidec-static brotlienc-static brotlicommon-static hwy
+	$(MAKE) -C $(<D) brotlidec brotlienc brotlicommon hwy
 
 $(CODEC_DIR)/CMakeLists.txt:
 	$(RM) -r $(@D)
