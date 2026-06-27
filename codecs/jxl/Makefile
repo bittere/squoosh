@@ -57,10 +57,10 @@ $(OUT_JS):
 		$(CODEC_BUILD_DIR)/third_party/highway/libhwy.a
 
 %/lib/libjxl.a: %/Makefile
-	$(MAKE) -C $(<D) jxl-static
+	$(MAKE) -C $(<D) jxl
 
 %/lib/libjxl_threads.a: %/Makefile
-	$(MAKE) -C $(<D) jxl_threads-static
+	$(MAKE) -C $(<D) jxl_threads
 
 # Enable SIMD on a SIMD build.
 $(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CXXFLAGS+=-msimd128
