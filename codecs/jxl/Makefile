@@ -24,9 +24,9 @@ enc/jxl_node_enc.js dec/jxl_node_dec.js: ENVIRONMENT = node
 enc/jxl_enc.js enc/jxl_node_enc.js enc/jxl_enc_mt.js dec/jxl_dec.js dec/jxl_node_dec.js: CODEC_BUILD_DIR:=$(CODEC_MT_BUILD_DIR)
 enc/jxl_enc_mt_simd.js: CODEC_BUILD_DIR:=$(CODEC_MT_SIMD_BUILD_DIR)
 
-enc/jxl_node_enc.js dec/jxl_node_dec.js enc/jxl_enc.js dec/jxl_dec.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a
-enc/jxl_enc_mt.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a
-enc/jxl_enc_mt_simd.js: $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/libskcms.a
+enc/jxl_node_enc.js dec/jxl_node_dec.js enc/jxl_enc.js dec/jxl_dec.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
+enc/jxl_enc_mt.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
+enc/jxl_enc_mt_simd.js: $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_SIMD_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_SIMD_BUILD_DIR)/third_party/highway/libhwy.a
 
 # Disable errors on deprecated SIMD intrinsics.
 # JPEG-XL & Highway need to catch up, once they do, we can remove this suppression.
@@ -62,6 +62,18 @@ $(OUT_JS):
 %/lib/libjxl_threads.a: %/Makefile
 	$(MAKE) -C $(<D) jxl_threads
 
+%/third_party/brotli/libbrotlidec-static.a: %/Makefile
+	$(MAKE) -C $(<D) brotlidec-static
+
+%/third_party/brotli/libbrotlienc-static.a: %/Makefile
+	$(MAKE) -C $(<D) brotlienc-static
+
+%/third_party/brotli/libbrotlicommon-static.a: %/Makefile
+	$(MAKE) -C $(<D) brotlicommon-static
+
+%/third_party/highway/libhwy.a: %/Makefile
+	$(MAKE) -C $(<D) hwy
+
 # Enable SIMD on a SIMD build.
 $(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CXXFLAGS+=-msimd128
 
@@ -73,7 +85,7 @@ $(CODEC_DIR)/third_party/skcms/skcms.cc.o: $(CODEC_DIR)/CMakeLists.txt
 	mkdir -p $(@D)
 	emar rc $@ $<
 
-# Build mt-variant Makefiles (cmake + skcms copy)
+# Build mt-variant Makefiles (cmake)
 %/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third_party/skcms/skcms.cc.o
 	emcmake cmake \
 	$(CMAKE_FLAGS) \

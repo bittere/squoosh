@@ -49,8 +49,6 @@ $(CODEC_BASELINE_BUILD_DIR)/Makefile: CMAKE_FLAGS+=-DCMAKE_DISABLE_FIND_PACKAGE_
 # Enable SIMD on a SIMD build.
 $(CODEC_MT_SIMD_BUILD_DIR)/Makefile: CMAKE_FLAGS+=-DWP2_ENABLE_SIMD=1
 
-export CXXFLAGS += -Wno-error -Wno-array-parameter
-
 %/Makefile: $(CODEC_DIR)/CMakeLists.txt
 	emcmake cmake \
 		$(CMAKE_FLAGS) \
@@ -58,6 +56,7 @@ export CXXFLAGS += -Wno-error -Wno-array-parameter
 		-DWP2_BUILD_EXAMPLES=0 \
 		-DWP2_BUILD_EXTRAS=0 \
 		-DWP2_REDUCED=1 \
+		-DCMAKE_CXX_FLAGS="-Wno-error -Wno-array-parameter" \
 		-B $(@D) \
 		$(<D)
 
