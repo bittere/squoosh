@@ -78,7 +78,7 @@ $(CODEC_MT_BUILD_DIR)/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third
 	-DCMAKE_CROSSCOMPILING_EMULATOR=node \
 	-B $(@D) \
 	$(<D)
-	$(MAKE) -C $(<D) brotlidec brotlienc brotlicommon hwy
+	$(MAKE) -C $(@D) brotlidec brotlienc brotlicommon hwy
 
 $(CODEC_DIR)/CMakeLists.txt:
 	$(RM) -r $(@D)
