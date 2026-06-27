@@ -20,8 +20,8 @@ enc/jxl_node_enc.js dec/jxl_node_dec.js: ENVIRONMENT = node
 
 enc/jxl_enc.js enc/jxl_node_enc.js enc/jxl_enc_mt.js dec/jxl_dec.js dec/jxl_node_dec.js: CODEC_BUILD_DIR:=$(CODEC_MT_BUILD_DIR)
 
-enc/jxl_node_enc.js dec/jxl_node_dec.js enc/jxl_enc.js dec/jxl_dec.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
-enc/jxl_enc_mt.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a $(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a $(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a
+enc/jxl_node_enc.js dec/jxl_node_dec.js enc/jxl_enc.js dec/jxl_dec.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a
+enc/jxl_enc_mt.js: $(CODEC_MT_BUILD_DIR)/lib/libjxl.a $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a $(CODEC_MT_BUILD_DIR)/third_party/libskcms.a
 
 export CXXFLAGS += -Wno-deprecated-declarations
 enc/jxl_enc_mt.js: CXXFLAGS+=-pthread
@@ -53,18 +53,6 @@ $(CODEC_MT_BUILD_DIR)/lib/libjxl.a: $(CODEC_MT_BUILD_DIR)/Makefile
 $(CODEC_MT_BUILD_DIR)/lib/libjxl_threads.a: $(CODEC_MT_BUILD_DIR)/Makefile
 	$(MAKE) -C $(<D) jxl_threads
 
-$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlidec-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
-	$(MAKE) -C $(<D) brotlidec-static
-
-$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlienc-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
-	$(MAKE) -C $(<D) brotlienc-static
-
-$(CODEC_MT_BUILD_DIR)/third_party/brotli/libbrotlicommon-static.a: $(CODEC_MT_BUILD_DIR)/Makefile
-	$(MAKE) -C $(<D) brotlicommon-static
-
-$(CODEC_MT_BUILD_DIR)/third_party/highway/libhwy.a: $(CODEC_MT_BUILD_DIR)/Makefile
-	$(MAKE) -C $(<D) hwy
-
 $(CODEC_DIR)/third_party/skcms/skcms.cc.o: $(CODEC_DIR)/CMakeLists.txt
 	emcc -Wall -O3 -o $@ -I$(CODEC_DIR)/third_party/skcms -c $(CODEC_DIR)/third_party/skcms/skcms.cc
 
@@ -86,9 +74,11 @@ $(CODEC_MT_BUILD_DIR)/Makefile: $(CODEC_DIR)/CMakeLists.txt | $(CODEC_DIR)/third
 	-DJPEGXL_ENABLE_OPENEXR=0 \
 	-DJPEGXL_ENABLE_DOXYGEN=0 \
 	-DJPEGXL_ENABLE_MANPAGES=0 \
+	-DJPEGXL_WARNINGS_AS_ERRORS=OFF \
 	-DCMAKE_CROSSCOMPILING_EMULATOR=node \
 	-B $(@D) \
 	$(<D)
+	$(MAKE) -C $(<D) brotlidec-static brotlienc-static brotlicommon-static hwy
 
 $(CODEC_DIR)/CMakeLists.txt:
 	$(RM) -r $(@D)

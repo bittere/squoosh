@@ -63,6 +63,7 @@ $(CODEC_DIR)/CMakeLists.txt:
 	mkdir -p $(CODEC_DIR)
 	curl -sL $(CODEC_URL) | tar xz -C $(CODEC_DIR)
 	sed -i 's/int16_t context\[\]/int16_t context[kMaxContextSize]/' $(CODEC_DIR)/src/common/lossy/block.cc
+	sed -i 's/-Werror//g' $(CODEC_DIR)/CMakeLists.txt
 
 clean:
 	$(RM) $(OUT_JS) $(OUT_WASM) $(OUT_WORKER)
